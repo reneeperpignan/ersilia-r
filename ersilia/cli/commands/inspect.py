@@ -12,9 +12,12 @@ def inspect_cmd():
 
         inspector = ModelInspector(model)
         value = {
-            'is_github_url_available': inspector.checkRepoExists()
+             'is_github_url_available': inspector.checkRepoExists(),
+             'metadata_complete': inspector.metadataComplete(),
+             'folder_structure_complete': inspector.folderStructureComplete()
         }
         #print or return?
         print(json.dumps(value))
         return json.dumps(value)
+    
     
