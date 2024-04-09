@@ -17,6 +17,8 @@ class ModelInspector(ErsiliaBase):
     
     def metadataComplete(self):
        # Search for specific keys in metadata json file
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           return False
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         response = requests.get(url)
         file = response.json() # Save as json object
@@ -31,6 +33,8 @@ class ModelInspector(ErsiliaBase):
     
     def folderStructureComplete(self):
        # Validate folder structure of repository
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           return False
         url = f"https://github.com/ersilia-os/{self.model}"
         folders = [".github/workflows", "model", "src", "model/checkpoints", "model/framework"]
         for name in folders:
