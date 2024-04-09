@@ -10,21 +10,31 @@ class ModelInspector(ErsiliaBase):
         self.model = model
 
 
-    def checkRepoExists(self):
+    def checkRepoExists(self): # Verify that repository exists at a given link
         url = f"https://github.com/ersilia-os/{self.model}"
         response = requests.head(url)
         return response.status_code == 200
     
     def metadataComplete(self):
-       # search for three words in metadata json file
-        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json"
+       # Search for specific keys in metadata json file
+        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         response = requests.get(url)
-        print(response.content)
-        # data = json.loads(file.read())
-        print(response, type(response))
-        return "True"
-        # r = file.json() 
-        # metadata_dict = json.loads(file)
-        # if metadata_dict is not None:
-        #     if metadata_dict['Identifier'] and metadata_dict['Slug'] and metadata_dict['Status'] is not None:
-        #         return True
+        file = response.json() # Save as json object
+
+        if file is not None:
+            try:
+                if file['Identifier'] and file['Slug'] and file['Status'] is not None: # Parse through json object and ensure 
+                    return True
+            except (KeyError): # If a given key not present in json file return false
+                return False
+        return False # Otherwise, if the key was present but has no value return false
+    
+    def folderStructureComplete(self):
+       # Validate folder structure of repository
+        url = f"https://github.com/ersilia-os/{self.model}"
+        folders = [".github/workflows", "model", "src", "model/checkpoints", "model/framework"]
+        for name in folders:
+            response = requests.get(url + "/tree/main/" + name) # Check if the folders are present in a given repository
+            if response.status_code != 200: 
+                return False # If the folder URL is not valid return false
+        return True
