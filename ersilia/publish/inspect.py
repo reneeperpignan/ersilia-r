@@ -43,7 +43,7 @@ class ModelInspector(ErsiliaBase):
                 return False # If the folder URL is not valid return false
             
         files = ["LICENSE", "Dockerfile"]
-        for name in folders:
+        for name in files:
             response = requests.get(url + "/blob/main/" + name) # Check if the files are present in a given repository
             if response.status_code != 200: 
                 return False # If the folder URL is not valid return false
