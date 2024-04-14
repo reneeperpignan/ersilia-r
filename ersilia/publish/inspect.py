@@ -66,6 +66,7 @@ class ModelInspector(ErsiliaBase):
             response = requests.get(url + "/blob/main/" + name) # Check if the files are present in a given repository
             if response.status_code != 200: 
                 return False # If the folder URL is not valid return false
+        return True
             
     def getRepos(self):
         all_repos = []
