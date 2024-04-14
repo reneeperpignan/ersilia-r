@@ -25,8 +25,27 @@ class ModelInspector(ErsiliaBase):
 
         if file is not None:
             try:
-                if file['Identifier'] and file['Slug'] and file['Status'] is not None: # Parse through json object and ensure 
-                    return True
+                if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
+                    # pub_url_works = requests.head(file['Publication']).status_code == 200
+                    pub_url_works = requests.head(file['Publication']).status_code != 404
+                    print("URL: ", file['Publication'])
+                    print("Works? ", pub_url_works)
+                    
+                    source_url_works = requests.head(file['Source Code']).status_code == 200
+                    print("URL: ", file['Source Code'])
+                    print("Works? ", source_url_works)
+
+                    s3_url_works = requests.head(file['S3']).status_code == 200
+                    print("URL: ", file['S3'])
+                    print("Works? ", s3_url_works)
+
+                    docker_url_works = requests.head(file['DockerHub']).status_code == 200
+                    print("URL: ", file['DockerHub'])
+                    print("Works? ", docker_url_works)
+
+                    # Other idea print("socket", socket.gethostbyname(file['S3']))
+                    if(pub_url_works and source_url_works and s3_url_works and docker_url_works):
+                        return True
             except (KeyError): # If a given key not present in json file return false
                 return False
         return False # Otherwise, if the key was present but has no value return false
