@@ -2,7 +2,6 @@ from .. import ErsiliaBase
 import requests
 import json
 from urllib.request import urlopen
-import socket
 
 
 class ModelInspector(ErsiliaBase):
