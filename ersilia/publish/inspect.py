@@ -84,7 +84,7 @@ class ModelInspector(ErsiliaBase):
                         repos.append(repo["name"])
                 page += 1
             else:
-                print(f"Failed to fetch repositories for organization {organization}.")
+                print(f"Failed to fetch repositories for ersilia.")
                 break
         print(repos)
         print(len(repos))     
