@@ -27,7 +27,8 @@ class ModelInspector(ErsiliaBase):
         if file is not None:
             try:
                 if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
-                    pub_url_works = requests.head(file['Publication']).status_code == 200
+                    # pub_url_works = requests.head(file['Publication']).status_code == 200
+                    pub_url_works = requests.head(file['Publication']).status_code != 404
                     print("URL: ", file['Publication'])
                     print("Works? ", pub_url_works)
                     
