@@ -88,7 +88,7 @@ class ModelInspector(ErsiliaBase):
                 print(f"Failed to fetch repositories for ersilia.")
                 break
         print(repos)
-        print(len(repos))     
+        print(len(repos))
         return True
 
     def validateDependicies(self):
