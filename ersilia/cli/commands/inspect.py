@@ -14,7 +14,8 @@ def inspect_cmd():
         value = {
              'is_github_url_available': inspector.checkRepoExists(),
              'metadata_complete': inspector.metadataComplete(),
-             'folder_structure_complete': inspector.folderStructureComplete()
+             'folder_structure_complete': inspector.folderStructureComplete(),
+             'dependencies_valid': inspector.validateDependencies()
         }
         #print or return?
         print(json.dumps(value))

@@ -1,8 +1,10 @@
 from .. import ErsiliaBase
 import requests
+import subprocess
 import json
 from urllib.request import urlopen
-
+from ..hub.content.card import RepoMetadataFile
+from ..hub.content.card import ReadmeMetadata
 
 class ModelInspector(ErsiliaBase):
     def __init__(self, model, config_json=None):
@@ -15,6 +17,38 @@ class ModelInspector(ErsiliaBase):
         response = requests.head(url)
         return response.status_code == 200
     
+    def validateDependencies(self):
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200:
+            return False
+        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile"
+        response = requests.get(url)
+        dockerfile_content = response.text
+        lines = dockerfile_content.split("\n")
+        keywords = ["RUN pip install"]
+        valid = False
+        lines_count = 0
+        for line in lines:
+            lines_count += 1
+            for keyword in keywords:
+                if keyword in line:
+                    if "=" in line:
+                        valid = True
+                    elif "rdkit" in line:
+                        valid = True
+                    else:
+                        print(line, "does not have proper version supplied")
+                        return False 
+
+        if "WORKDIR /repo" not in lines[lines_count - 3]:
+            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
+            return False
+
+        if "COPY . /repo" or "COPY ./repo" not in lines[lines_count - 2]:
+            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
+            return False
+        
+        return valid
+    
     def metadataComplete(self):
        # Search for specific keys in metadata json file
         if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
@@ -23,11 +57,15 @@ class ModelInspector(ErsiliaBase):
         response = requests.get(url)
         file = response.json() # Save as json object
 
+        # test = RepoMetadataFile(self.model)
+        # print(test)
+        # test2 = ReadmeMetadata(self.model)
+        # print(test2)
         if file is not None:
             try:
                 if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
-                    # pub_url_works = requests.head(file['Publication']).status_code == 200
-                    pub_url_works = requests.head(file['Publication']).status_code != 404
+                    pub_url_works = requests.head(file['Publication']).status_code == 200
+                    # pub_url_works = requests.head(file['Publication']).status_code != 404
                     print("URL: ", file['Publication'])
                     print("Works? ", pub_url_works)
                     
@@ -44,11 +82,12 @@ class ModelInspector(ErsiliaBase):
                     print("Works? ", docker_url_works)
 
                     # Other idea print("socket", socket.gethostbyname(file['S3']))
-                    if(pub_url_works and source_url_works and s3_url_works and docker_url_works):
-                        return True
+                    if(not (pub_url_works and source_url_works and s3_url_works and docker_url_works)):
+                        return False
             except (KeyError): # If a given key not present in json file return false
                 return False
-        return False # Otherwise, if the key was present but has no value return false
+    
+        return True # Otherwise, if the key was present but has no value return false
     
     def folderStructureComplete(self):
        # Validate folder structure of repository
