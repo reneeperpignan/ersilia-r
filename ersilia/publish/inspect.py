@@ -17,37 +17,6 @@ class ModelInspector(ErsiliaBase):
         response = requests.head(url)
         return response.status_code == 200
     
-    def validateDependencies(self):
-        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200:
-            return False
-        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile"
-        response = requests.get(url)
-        dockerfile_content = response.text
-        lines = dockerfile_content.split("\n")
-        keywords = ["RUN pip install"]
-        valid = False
-        lines_count = 0
-        for line in lines:
-            lines_count += 1
-            for keyword in keywords:
-                if keyword in line:
-                    if "=" in line:
-                        valid = True
-                    elif "rdkit" in line:
-                        valid = True
-                    else:
-                        print(line, "does not have proper version supplied")
-                        return False 
-
-        if "WORKDIR /repo" not in lines[lines_count - 3]:
-            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
-            return False
-
-        if "COPY . /repo" or "COPY ./repo" not in lines[lines_count - 2]:
-            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
-            return False
-        
-        return valid
     
     def metadataComplete(self):
        # Search for specific keys in metadata json file
@@ -64,8 +33,8 @@ class ModelInspector(ErsiliaBase):
         if file is not None:
             try:
                 if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
-                    pub_url_works = requests.head(file['Publication']).status_code == 200
-                    # pub_url_works = requests.head(file['Publication']).status_code != 404
+                    # pub_url_works = requests.head(file['Publication']).status_code == 200
+                    pub_url_works = requests.head(file['Publication']).status_code != 404
                     print("URL: ", file['Publication'])
                     print("Works? ", pub_url_works)
                     
@@ -142,12 +111,12 @@ class ModelInspector(ErsiliaBase):
             if line.startswith('RUN pip install') and "rdkit" not in line:
                 info = line.split('==')
                 if len(info) < 2:
-                    print("No specification found.")
+                    print(f"No specification found for {info[0]}.")
                     return False
                 else:
                     specification = info[1]
                     if specification.strip()=="":
-                        print("No specification found.")
+                        print(f"No specification found for {info[0]}.")
                         return False
                     else:
                         print(f"{info[0]}'s specification is {specification}")
