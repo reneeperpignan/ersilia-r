@@ -21,7 +21,6 @@ class ModelInspector(ErsiliaBase):
     def metadataComplete(self):
        # Search for specific keys in metadata json file
         if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
-           print("Repo not found")
            return False
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         response = requests.get(url)
@@ -54,10 +53,13 @@ class ModelInspector(ErsiliaBase):
 
                     # Other idea print("socket", socket.gethostbyname(file['S3']))
                     if(not (pub_url_works and source_url_works and s3_url_works and docker_url_works)):
+                        print("All links do not work")
                         return False
                 else:
+                    print("All metadata links not provided")
                     return False
             except (KeyError): # If a given key not present in json file return false
+                print("All metadata categories not provided")
                 return False
         return True # Otherwise, if the key was present but has no value return false
     
@@ -70,18 +72,19 @@ class ModelInspector(ErsiliaBase):
         for name in folders:
             response = requests.get(url + "/tree/main/" + name) # Check if the folders are present in a given repository
             if response.status_code != 200: 
+                print(f"Folder {name} not found")
                 return False # If the folder URL is not valid return false
             
         files = ["LICENSE", "Dockerfile"]
         for name in files:
             response = requests.get(url + "/blob/main/" + name) # Check if the files are present in a given repository
             if response.status_code != 200: 
+                print(f"File {name} not found")
                 return False # If the folder URL is not valid return false
         return True
 
     def validateDependicies(self):
         if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
-           print("Repo not found")
            return False
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
         response = requests.get(url)
@@ -101,35 +104,11 @@ class ModelInspector(ErsiliaBase):
                         return False
 
         if "WORKDIR /repo" not in lines[len(lines) - 2]:
-            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
+            print("Dockerfile is missing 'WORKDIR /repo' in the right place")
             return False
 
         if "COPY . /repo" not in lines[len(lines) - 1] and "COPY ./repo" not in lines[len(lines) - 1]:
-            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
+            print("Dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
             return False
         return True
             
-
-
-    def getRepos(self):
-        all_repos = []
-        page = 1
-        repos = []
-        while True:
-            params = {"page": page}
-            url = f"https://api.github.com/orgs/ersilia-os/repos"
-            headers = {"Accept": "application/vnd.github.v3+json"}
-            response = requests.get(url, headers=headers, params=params)
-            if response.status_code == 200:
-                if len(response.json()) == 0:
-                    break  # No more repositories to fetch
-                for repo in response.json():
-                    if repo["name"][:3] == "eos":
-                        repos.append(repo["name"])
-                page += 1
-            else:
-                print(f"Failed to fetch repositories for ersilia.")
-                break
-        print(repos)
-        print(len(repos))
-        return True
