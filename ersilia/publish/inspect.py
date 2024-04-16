@@ -88,5 +88,37 @@ class ModelInspector(ErsiliaBase):
                 print(f"Failed to fetch repositories for ersilia.")
                 break
         print(repos)
-        print(len(repos))     
+        print(len(repos))
         return True
+
+    def validateDependicies(self):
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           return False
+        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
+        response = requests.get(url)
+        file = response.text
+        lines = file.split("\n")
+        lines = [s for s in lines if s]
+        for line in lines:
+            if line.startswith('RUN pip install') and "rdkit" not in line:
+                info = line.split('==')
+                if len(info) < 2:
+                    print("No specification found.")
+                    return False
+                else:
+                    specification = info[1]
+                    if specification.strip()=="":
+                        print("No specification found.")
+                        return False
+                    else:
+                        print(f"{info[0]}'s specification is {specification}")
+
+        if "WORKDIR /repo" not in lines[len(lines) - 2]:
+            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
+            return False
+
+        if "COPY . /repo" not in lines[len(lines) - 1] and "COPY ./repo" not in lines[len(lines) - 1]:
+            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
+            return False
+        return True
+            
