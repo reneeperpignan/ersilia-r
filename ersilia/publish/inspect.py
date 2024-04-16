@@ -21,6 +21,7 @@ class ModelInspector(ErsiliaBase):
     def metadataComplete(self):
        # Search for specific keys in metadata json file
         if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           print("Repo not found")
            return False
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         response = requests.get(url)
@@ -30,6 +31,7 @@ class ModelInspector(ErsiliaBase):
         # print(test)
         # test2 = ReadmeMetadata(self.model)
         # print(test2)
+        
         if file is not None:
             try:
                 if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
@@ -53,9 +55,10 @@ class ModelInspector(ErsiliaBase):
                     # Other idea print("socket", socket.gethostbyname(file['S3']))
                     if(not (pub_url_works and source_url_works and s3_url_works and docker_url_works)):
                         return False
+                else:
+                    return False
             except (KeyError): # If a given key not present in json file return false
                 return False
-    
         return True # Otherwise, if the key was present but has no value return false
     
     def folderStructureComplete(self):
@@ -75,7 +78,39 @@ class ModelInspector(ErsiliaBase):
             if response.status_code != 200: 
                 return False # If the folder URL is not valid return false
         return True
+
+    def validateDependicies(self):
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           print("Repo not found")
+           return False
+        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
+        response = requests.get(url)
+        file = response.text
+        lines = file.split("\n")
+        lines = [s for s in lines if s]
+        for line in lines:
+            if line.startswith('RUN pip install') and "rdkit" not in line:
+                info = line.split('==')
+                if len(info) < 2:
+                    print(f"No specification found for {info[0]}.")
+                    return False
+                else:
+                    specification = info[1]
+                    if specification.strip()=="":
+                        print(f"No specification found for {info[0]}.")
+                        return False
+
+        if "WORKDIR /repo" not in lines[len(lines) - 2]:
+            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
+            return False
+
+        if "COPY . /repo" not in lines[len(lines) - 1] and "COPY ./repo" not in lines[len(lines) - 1]:
+            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
+            return False
+        return True
             
+
+
     def getRepos(self):
         all_repos = []
         page = 1
@@ -98,35 +133,3 @@ class ModelInspector(ErsiliaBase):
         print(repos)
         print(len(repos))
         return True
-
-    def validateDependicies(self):
-        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
-           return False
-        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
-        response = requests.get(url)
-        file = response.text
-        lines = file.split("\n")
-        lines = [s for s in lines if s]
-        for line in lines:
-            if line.startswith('RUN pip install') and "rdkit" not in line:
-                info = line.split('==')
-                if len(info) < 2:
-                    print(f"No specification found for {info[0]}.")
-                    return False
-                else:
-                    specification = info[1]
-                    if specification.strip()=="":
-                        print(f"No specification found for {info[0]}.")
-                        return False
-                    else:
-                        print(f"{info[0]}'s specification is {specification}")
-
-        if "WORKDIR /repo" not in lines[len(lines) - 2]:
-            print("Your dockerfile is missing 'WORKDIR /repo' in the right place")
-            return False
-
-        if "COPY . /repo" not in lines[len(lines) - 1] and "COPY ./repo" not in lines[len(lines) - 1]:
-            print("Your dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax")
-            return False
-        return True
-            
