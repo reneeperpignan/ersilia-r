@@ -25,8 +25,27 @@ class ModelInspector(ErsiliaBase):
 
         if file is not None:
             try:
-                if file['Identifier'] and file['Slug'] and file['Status'] is not None: # Parse through json object and ensure 
-                    return True
+                if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
+                    # pub_url_works = requests.head(file['Publication']).status_code == 200
+                    pub_url_works = requests.head(file['Publication']).status_code != 404
+                    print("URL: ", file['Publication'])
+                    print("Works? ", pub_url_works)
+                    
+                    source_url_works = requests.head(file['Source Code']).status_code == 200
+                    print("URL: ", file['Source Code'])
+                    print("Works? ", source_url_works)
+
+                    s3_url_works = requests.head(file['S3']).status_code == 200
+                    print("URL: ", file['S3'])
+                    print("Works? ", s3_url_works)
+
+                    docker_url_works = requests.head(file['DockerHub']).status_code == 200
+                    print("URL: ", file['DockerHub'])
+                    print("Works? ", docker_url_works)
+
+                    # Other idea print("socket", socket.gethostbyname(file['S3']))
+                    if(pub_url_works and source_url_works and s3_url_works and docker_url_works):
+                        return True
             except (KeyError): # If a given key not present in json file return false
                 return False
         return False # Otherwise, if the key was present but has no value return false
@@ -41,4 +60,58 @@ class ModelInspector(ErsiliaBase):
             response = requests.get(url + "/tree/main/" + name) # Check if the folders are present in a given repository
             if response.status_code != 200: 
                 return False # If the folder URL is not valid return false
+            
+        files = ["LICENSE", "Dockerfile"]
+        for name in files:
+            response = requests.get(url + "/blob/main/" + name) # Check if the files are present in a given repository
+            if response.status_code != 200: 
+                return False # If the folder URL is not valid return false
         return True
+            
+    def getRepos(self):
+        all_repos = []
+        page = 1
+        repos = []
+        while True:
+            params = {"page": page}
+            url = f"https://api.github.com/orgs/ersilia-os/repos"
+            headers = {"Accept": "application/vnd.github.v3+json"}
+            response = requests.get(url, headers=headers, params=params)
+            if response.status_code == 200:
+                if len(response.json()) == 0:
+                    break  # No more repositories to fetch
+                for repo in response.json():
+                    if repo["name"][:3] == "eos":
+                        repos.append(repo["name"])
+                page += 1
+            else:
+                print(f"Failed to fetch repositories for ersilia.")
+                break
+        print(repos)
+        print(len(repos))     
+        return True
+
+    def validDependicies(self):
+        if requests.head(f"https://github.com/ersilia-os/{self.model}").status_code != 200: # Make sure repo exists
+           return False
+        url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
+        response = requests.get(url)
+        file = response.text() 
+        for line_num, line in enumerate(file, start=1):
+            line = line.strip()
+            if line.startswith('RUN pip install'):
+                info = line.split('==')
+                if len(info) < 2:
+                    print("No specification found.")
+                    break
+                else:
+                    specification = info[1]
+                    if specification.strip()=="":
+                        print("No specification found.")
+                        break
+                    else:
+                        print(f"{info[0]}'s specification is {specification}")
+                        break
+            else:
+                return False
+            
