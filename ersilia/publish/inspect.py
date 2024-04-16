@@ -3,8 +3,8 @@ import requests
 import subprocess
 import json
 from urllib.request import urlopen
-from ..hub.content.card import RepoMetadataFile
-from ..hub.content.card import ReadmeMetadata
+#from ..hub.content.card import RepoMetadataFile
+#from ..hub.content.card import ReadmeMetadata
 
 class ModelInspector(ErsiliaBase):
     def __init__(self, model, config_json=None):
@@ -31,7 +31,7 @@ class ModelInspector(ErsiliaBase):
         # print(test)
         # test2 = ReadmeMetadata(self.model)
         # print(test2)
-        
+
         if file is not None:
             try:
                 if file['Publication'] and file['Source Code'] and file['S3'] and file['DockerHub']: # Parse through json object and ensure 
