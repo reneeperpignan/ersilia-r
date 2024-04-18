@@ -3,8 +3,7 @@ import requests
 import subprocess
 import json
 from urllib.request import urlopen
-#from ..hub.content.card import RepoMetadataFile
-#from ..hub.content.card import ReadmeMetadata
+from ..hub.content.card import RepoMetadataFile
 
 class ModelInspector(ErsiliaBase):
     def __init__(self, model, config_json=None):
@@ -27,9 +26,12 @@ class ModelInspector(ErsiliaBase):
         file = response.json() # Save as json object
 
         # test = RepoMetadataFile(self.model)
-        # print(test)
-        # test2 = ReadmeMetadata(self.model)
-        # print(test2)
+        # try:
+        #     RepoMetadataFile.read_information(test)
+        #     print(test)
+        # except():
+        #     print("error")
+        #     return False
 
         if file is not None:
             try:
@@ -51,7 +53,7 @@ class ModelInspector(ErsiliaBase):
                     # print("URL: ", file['DockerHub'])
                     # print("Works? ", docker_url_works)
 
-                    # Other idea print("socket", socket.gethostbyname(file['S3']))
+                    # Or print("socket", socket.gethostbyname(file['S3']))
                     if(not (pub_url_works and source_url_works and s3_url_works and docker_url_works)):
                         # print("All links do not work")
                         return False
@@ -94,7 +96,7 @@ class ModelInspector(ErsiliaBase):
         lines = file.split("\n")
         lines = [s for s in lines if s]
         for line in lines:
-            if line.startswith('RUN pip install') and "rdkit" not in line:
+            if line.startswith('RUN pip install'):
                 info = line.split('==')
                 if len(info) < 2:
                     # print(f"No specification found for {info[0]}.")
