@@ -12,10 +12,14 @@ def inspect_cmd():
 
         inspector = ModelInspector(model)
         value = {
-             'is_github_url_available': inspector.checkRepoExists(),
-             'metadata_complete': inspector.metadataComplete(),
-             'folder_structure_complete': inspector.folderStructureComplete(),
-             'docker_check': inspector.validateDependicies()
+             'is_github_url_available': inspector.checkRepoExists(0),
+             'is_github_url_available_details': inspector.checkRepoExists(1),
+             'metadata_complete': inspector.metadataComplete(0),
+             'metadata_complete_details': inspector.metadataComplete(1),
+             'folder_structure_complete': inspector.folderStructureComplete(0),
+             'folder_structure_complete_details': inspector.folderStructureComplete(1),
+             'docker_check': inspector.validateDependicies(0),
+             'docker_check_details': inspector.validateDependicies(1)
         }
         #print or return?
         print(json.dumps(value))

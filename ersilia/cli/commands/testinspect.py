@@ -1,5 +1,6 @@
 import requests
 import subprocess
+import random
 
 def getRepos():
     all_repos = []
@@ -18,12 +19,13 @@ def getRepos():
                     repos.append(repo["name"])
             page += 1
         else:
-            print(f"Failed to fetch repositories for ersilia.")
             break
     print("Fetched ", len(repos), " repositories. Inspecting now.")
     return repos
 
+
 repos = getRepos()
+random.shuffle(repos)
 for repo in repos:
     command = f"ersilia inspect {repo}"
     print(command)
