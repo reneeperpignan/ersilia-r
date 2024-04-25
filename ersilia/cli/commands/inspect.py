@@ -19,7 +19,11 @@ def inspect_cmd():
              'folder_structure_complete': inspector.folderStructureComplete(0),
              'folder_structure_complete_details': inspector.folderStructureComplete(1),
              'docker_check': inspector.validateDependicies(0),
-             'docker_check_details': inspector.validateDependicies(1)
+             'docker_check_details': inspector.validateDependicies(1),
+             #'computational_performance_tracking': inspector.computationalPerformance(0),
+             #'computational_performance_tracking_details': inspector.computationalPerformance(1),
+             'extra_files_check': inspector.noExcessFiles(0),
+             'extra_files_check_detrails': inspector.noExcessFiles(1),
         }
         #print or return?
         print(json.dumps(value))

@@ -1,9 +1,11 @@
 from .. import ErsiliaBase
 import requests
 import subprocess
+import time
 import json
 from urllib.request import urlopen
 from ..hub.content.card import RepoMetadataFile
+
 
 class ModelInspector(ErsiliaBase):
     def __init__(self, model, config_json=None):
@@ -11,21 +13,21 @@ class ModelInspector(ErsiliaBase):
         self.model = model
 
 
-    def checkRepoExists(self, num): # Verify that repository exists at a given link
+    def checkRepoExists(self, flag): # Verify that repository exists at a given link
         url = f"https://github.com/ersilia-os/{self.model}"
         response = requests.head(url)
-        if num == 0:
+        if flag == 0:
             return response.status_code == 200
         elif response.status_code == 200:
             return "Check passed."
         return f"Connection invalid, no github repository found at https://github.com/ersilia-os/{self.model}. Please check that this repository exists in the ersilia-os database."
     
     
-    def metadataComplete(self, num):
+    def metadataComplete(self, flag):
        # Search for specific keys in metadata json file
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         if requests.head(url).status_code != 200: # Make sure repo exists
-           if num == 0:
+           if flag == 0:
                 return False
            return f"Metadata file could not be loated for model {self.model}. Please check that the link https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json is valid."
         
@@ -80,21 +82,21 @@ class ModelInspector(ErsiliaBase):
                 check_passed = False
                 details = details + "Connection failed when trying to access a URL listed in the metadata. Please check that URLs are all accurate and accessible. "
         
-        if num == 0:
+        if flag == 0:
             return check_passed
         if details:
             return details
         return "Check passed."
     
 
-    def folderStructureComplete(self, num):
+    def folderStructureComplete(self, flag):
         check_passed = True
         details = ""
 
         # Validate folder structure of repository
         url = f"https://github.com/ersilia-os/{self.model}"
         if requests.head(url).status_code != 200: # Make sure repo exists
-           if num == 0:
+           if flag == 0:
               return False
            return f"Repository could not be loated for model {self.model}. Please check that the link https://github.com/ersilia-os/{self.model} is valid."
         
@@ -112,20 +114,20 @@ class ModelInspector(ErsiliaBase):
                 details = details + f"No {name} file could be found. please check that the link {url}/blob/main/{name} is valid. "
                 check_passed = False # If the folder URL is not valid return false
 
-        if num == 0:
+        if flag == 0:
             return check_passed
         if check_passed:
             return "Check passed."
         return details
 
 
-    def validateDependicies(self, num):
+    def validateDependicies(self, flag):
         check_passed = True
         details = ""
 
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
         if requests.head(url).status_code != 200: # Make sure repo exists
-           if num == 0:
+           if flag == 0:
               return False
            return f"Dockerfile could not be loated for model {self.model}. Please check that the link https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile is valid."
         
@@ -137,6 +139,13 @@ class ModelInspector(ErsiliaBase):
         for line in lines:
             if line.startswith('RUN pip install'):
                 info = line.split('==')
+                install = line.split('RUN ')
+                result = subprocess.run(install, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if result.returncode != 0 and flag == 0:
+                    return False
+                if result.returncode != 0 and flag == 1:
+                    return f"Error running {install}, {result.stderr}"
+
                 if len(info) < 2:
                     details = details + f"No version specification found for the line {info[0]} in the Docker file. "
                     check_passed = False
@@ -154,9 +163,68 @@ class ModelInspector(ErsiliaBase):
             details = details + f"Dockerfile is missing 'COPY . /repo' in the right place or has incorrect syntax. "
             check_passed = False
 
-        if num == 0:
+        if flag == 0:
             return check_passed
         if check_passed:
             return "Check passed."
         return details
+    
+    def computationalPerformance(self, flag):
+        details = ""
+        
+        # 1 trial
+
+        # for n in (1,10,100):
+        #     startTime = time.time()
+
+        #     serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        #     if serve.returncode != 0:
+        #         if flag == 0:
+        #             return False
+        #         return f"Error serving model: {serve.stdout}, {serve.stderr}"
             
+        #     example = subprocess.run(f"ersilia example -f my_input.csv -n {n}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        #     if example.returncode != 0:
+        #         if flag == 0:
+        #             return False
+        #         return f"Error getting example for model: {example.stderr}"
+            
+        #     run = subprocess.run("ersilia run -i my_input.csv", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        #     if run.returncode != 0:
+        #         if flag == 0:
+        #             return False
+        #         return f"Error running model: {run.stderr}"
+            
+        #     endTime = time.time()
+
+        #     executionTime = endTime - startTime
+        #     details = details + f"Execution time ({n} Prediction(s)): {executionTime} seconds. "
+
+        return details
+    
+
+    def noExcessFiles(self, flag):
+        check_passed = True
+        details = ""
+
+        # Validate folder structure of repository
+        url = f"https://api.github.com/repos/ersilia-os/{self.model}/contents"
+        if requests.head(url).status_code != 200: # Make sure repo exists
+           if flag == 0:
+              return False
+           return f"Repository could not be loated for model {self.model}. Please check that the link https://api.github.com/repos/ersilia-os/{self.model}/contents is valid."
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        response = requests.get(url)
+        
+        folders = [".github", "model", "src", ".gitignore", "Dockerfile", "LICENSE", "README.md", "metadata.json", "pack.py"]
+        for item in response.json():
+            name = item["name"]
+            if name not in folders: 
+                details = details + f"Unexpected folder/file {name} found in root directory. Please check that {name} is a valid folder/file. "
+                check_passed = False # If the folder URL is not valid return false
+            
+        if flag == 0:
+            return check_passed
+        if check_passed:
+            return "Check passed."
+        return details
