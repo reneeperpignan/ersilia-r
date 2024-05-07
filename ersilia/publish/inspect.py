@@ -177,6 +177,7 @@ class ModelInspector(ErsiliaBase):
         # for n in (1,10,100):
         #     startTime = time.time()
 
+        # fetch first
         #     serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         #     if serve.returncode != 0:
         #         if flag == 0:
@@ -216,7 +217,7 @@ class ModelInspector(ErsiliaBase):
         headers = {"Accept": "application/vnd.github.v3+json"}
         response = requests.get(url)
         
-        folders = [".github", "model", "src", ".gitignore", "Dockerfile", "LICENSE", "README.md", "metadata.json", "pack.py"]
+        folders = [".github", "model", "src", ".gitignore", "Dockerfile", "LICENSE", "README.md", "metadata.json", "pack.py", ".gitattributes"]
         for item in response.json():
             name = item["name"]
             if name not in folders: 

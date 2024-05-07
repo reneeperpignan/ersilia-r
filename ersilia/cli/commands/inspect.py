@@ -6,7 +6,7 @@ import json
 
 def inspect_cmd():
 
-    @ersilia_cli.command(short_help="Serve model", help="Serve model")
+    @ersilia_cli.command(short_help="Inspect model", help="Inspect model structure and metadata")
     @click.argument("model", type=click.STRING)
     def inspect(model):
 
