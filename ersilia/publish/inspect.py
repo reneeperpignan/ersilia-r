@@ -174,34 +174,36 @@ class ModelInspector(ErsiliaBase):
         
         # 1 trial
 
-        # for n in (1,10,100):
-        #     startTime = time.time()
+        for n in (1,10,100):
+            startTime = time.time()
 
         # fetch first
-        #     serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        #     if serve.returncode != 0:
-        #         if flag == 0:
-        #             return False
-        #         return f"Error serving model: {serve.stdout}, {serve.stderr}"
+            serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if serve.returncode != 0:
+                if flag == 0:
+                    return False
+                return f"Error serving model: {serve.stdout}, {serve.stderr}"
             
-        #     example = subprocess.run(f"ersilia example -f my_input.csv -n {n}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        #     if example.returncode != 0:
-        #         if flag == 0:
-        #             return False
-        #         return f"Error getting example for model: {example.stderr}"
+            example = subprocess.run(f"ersilia example -f my_input.csv -n {n}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if example.returncode != 0:
+                if flag == 0:
+                    return False
+                return f"Error getting example for model: {example.stderr}"
             
-        #     run = subprocess.run("ersilia run -i my_input.csv", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        #     if run.returncode != 0:
-        #         if flag == 0:
-        #             return False
-        #         return f"Error running model: {run.stderr}"
+            run = subprocess.run("ersilia run -i my_input.csv", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if run.returncode != 0:
+                if flag == 0:
+                    return False
+                return f"Error running model: {run.stderr}"
             
-        #     endTime = time.time()
+            endTime = time.time()
 
-        #     executionTime = endTime - startTime
-        #     details = details + f"Execution time ({n} Prediction(s)): {executionTime} seconds. "
+            executionTime = endTime - startTime
+            details = details + f"Execution time ({n} Prediction(s)): {executionTime} seconds. "
 
-        return details
+        if flag == 1:
+            return details
+        return True
     
 
     def noExcessFiles(self, flag):
