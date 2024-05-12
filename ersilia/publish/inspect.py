@@ -172,17 +172,14 @@ class ModelInspector(ErsiliaBase):
     def computationalPerformance(self, flag):
         details = ""
         
-        # 1 trial
-
-        for n in (1,10,100):
-            startTime = time.time()
-
         # fetch first
-            serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if serve.returncode != 0:
-                if flag == 0:
-                    return False
-                return f"Error serving model: {serve.stdout}, {serve.stderr}"
+        serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if serve.returncode != 0:
+            if flag == 0:
+                return False
+            return f"Error serving model: {serve.stdout}, {serve.stderr}"
+        
+        for n in (1,10,100):
             
             example = subprocess.run(f"ersilia example -f my_input.csv -n {n}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if example.returncode != 0:
@@ -190,6 +187,8 @@ class ModelInspector(ErsiliaBase):
                     return False
                 return f"Error getting example for model: {example.stderr}"
             
+            startTime = time.time()
+
             run = subprocess.run("ersilia run -i my_input.csv", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if run.returncode != 0:
                 if flag == 0:
