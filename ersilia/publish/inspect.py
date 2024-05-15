@@ -13,7 +13,16 @@ class ModelInspector(ErsiliaBase):
         self.model = model
 
 
-    def checkRepoExists(self, flag): # Verify that repository exists at a given link
+    def checkRepoExists(self, flag):
+        """
+        Verify that the repository exists at a given link.
+        
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
         url = f"https://github.com/ersilia-os/{self.model}"
         response = requests.head(url)
         if flag == 0:
@@ -24,7 +33,15 @@ class ModelInspector(ErsiliaBase):
     
     
     def metadataComplete(self, flag):
-       # Search for specific keys in metadata json file
+        """
+        Search for specific keys in metadata JSON file.
+        
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/metadata.json" # Get raw file from GitHub
         if requests.head(url).status_code != 200: # Make sure repo exists
            if flag == 0:
@@ -90,10 +107,17 @@ class ModelInspector(ErsiliaBase):
     
 
     def folderStructureComplete(self, flag):
+        """
+        Validate folder structure of the repository.
+        
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
         check_passed = True
         details = ""
-
-        # Validate folder structure of repository
         url = f"https://github.com/ersilia-os/{self.model}"
         if requests.head(url).status_code != 200: # Make sure repo exists
            if flag == 0:
@@ -122,9 +146,17 @@ class ModelInspector(ErsiliaBase):
 
 
     def validateDependicies(self, flag):
+        """
+        Check dependencies specified in the Dockerfile.
+        
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
         check_passed = True
         details = ""
-
         url = f"https://raw.githubusercontent.com/ersilia-os/{self.model}/main/Dockerfile" # Get raw file from GitHub
         if requests.head(url).status_code != 200: # Make sure repo exists
            if flag == 0:
@@ -170,9 +202,16 @@ class ModelInspector(ErsiliaBase):
         return details
     
     def computationalPerformance(self, flag):
-        details = ""
+        """
+        Measure computational performance by serving the model and running predictions.
         
-        # fetch first
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
+        details = ""
         serve = subprocess.run(f"ersilia serve {self.model}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if serve.returncode != 0:
             if flag == 0:
@@ -206,10 +245,17 @@ class ModelInspector(ErsiliaBase):
     
 
     def noExcessFiles(self, flag):
+        """
+        Ensure that there are no excess files in the root directory of the repository.
+        
+        Args:
+            flag (int): Flag indicating whether to return boolean or detailed message.
+            
+        Returns:
+            bool or str: Depending on the flag, returns boolean or a message indicating the check status.
+        """
         check_passed = True
         details = ""
-
-        # Validate folder structure of repository
         url = f"https://api.github.com/repos/ersilia-os/{self.model}/contents"
         if requests.head(url).status_code != 200: # Make sure repo exists
            if flag == 0:
